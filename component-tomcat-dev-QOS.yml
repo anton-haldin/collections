@@ -10,7 +10,8 @@ application:
     input.instance-size: "m1.small" ### EC2 Instance type
     input.java-opts: "-Duser.timezone=UTC" ### JAVA_OPTS
     input.recipe-url: "https://s3.amazonaws.com/qubell-starter-kit-artifacts/qubell-bazaar/component-tomcat-dev-cookbooks-stable-385644c.tar.gz" ### Chef cookbooks url
-
+  bindings:
+   - [workflow, openshift]
 # Root Application Interfaces.
 # Here we describe a interfaces with pins and their bindings on components interfaces
 # For binding using function bind(Component1#interface.pin, Component2#interface.pin)
@@ -30,7 +31,7 @@ application:
       deploy-war: "bind(workflow#actions.deploy-war)"
       reconfigure: "bind(workflow#actions.reconfigure)"
       manage-service: "bind(workflow#actions.manage-service)"
-      app-hosts: "bind(workflow#result.app-hosts)"
+      app-hosts: "bind(workflow#result.app-hosts2)"
       app-port: "bind(workflow#result.app-port)"
 
  ####### Components definitions ########
@@ -76,6 +77,7 @@ application:
           recipe-url:
              type: configuration(string)
              name: Cookbooks URL
+
         actions:
           build-app:
              type: receive-command(string scm-provider, string git-uri, string app-branch => list<string> wars)
@@ -92,14 +94,22 @@ application:
           manage-service:
              type: receive-command(string service-action)
              name: Manage service
+        openshift:
+          create-app: send-command(string name, string git-uri, string app-branch => list<string> context)
+          deploy-app: send-command(string name => string status)
+          deployWarContext-app: send-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status) 
+          delete-app: send-command(string name => string status)
         result:
           app-hosts:
+             type: publish-signal(list<string>)
+             name: Application hosts
+          app-hosts2:
              type: publish-signal(list<string>)
              name: Application hosts
           app-port:
              type: publish-signal(int)
              name: Application port
-
+      required: [openshift]
       configuration:
         configuration.triggers:
           input.quantity: update
@@ -134,6 +144,8 @@ application:
             return: ### Values returned from workflow
               app-hosts:
                 value: "{$.app-hosts}"
+              app-hosts2:
+                value: "{$.app-hosts}"
               app-port:
                 value: "{$.app-port}"
           launch: *update
@@ -155,9 +167,23 @@ application:
                         revision: "{$.app-branch}"
                   output:
                     chefAttrs: chefState
+              - createAppInOpenshift:
+                  action: openshift.create-app
+                  precedingPhases: [ build-app]
+                  parameters:
+                    ignoreFail: true
+                    commandCallTimeout: 600
+                    name: "test"
+                    git-uri: "test"
+                    app-branch: "test"
+                  output:
+                    deployOSresult: context
             return: ### Values returned from workflow
               wars:
                 value: "{$.chefAttrs['*'][0].cookbook-qubell-build.artifacts}"
+              app-hosts2: 
+                value: 
+                  - "{$.deployOSresult[0]}"
 
           deploy-libs: ###  Additional Tomcat libraries installation workflow
             steps:
@@ -191,6 +217,16 @@ application:
                         context:
                           context_attrs: "{$.context-attrs}"
                           context_nodes: "{$.context-nodes}"
+              - deployOpnshift:
+                  action: openshift.deployWarContext-app
+                  precedingPhases: [ deploy-war]
+                  parameters:
+                    commandCallTimeout: 600
+                    name: "test"
+                    bucket_url_with_war: "test"
+                    bucket_url_with_context: "test"
+                  output:
+                    deployOSresult: status
           reconfigure: ### Additional workflow for reconfiguring Tomcat in case changing app-port and java-opts
             steps:
               - reconfigure-tomcat:
@@ -221,4 +257,21 @@ application:
                         manage:
                           services: ["tomcat6"]
                           action: "{$.service-action}"
-
+                      
+####  Component openshift ####
+    openshift:
+      type: reference.Service
+      interfaces:
+        actions:
+          create-app:
+            type: receive-command(string name, string git-uri, string app-branch => list<string> context)
+            name: Create Application
+          deploy-app:
+            type: receive-command(string name => string status)
+            name: Deploy Application
+          deployWarContext-app:
+             type: receive-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status)
+             name: Deploy Application with War and Context
+          delete-app:
+            type: receive-command(string name => string status)
+            name: Delete Application

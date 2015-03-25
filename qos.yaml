@@ -1,0 +1,184 @@
+#### Qubell OpenShift example implementation ####
+#### OpenShift Service ####
+application:
+# Input Configuration parameters.
+# In this section you can set input configuration parameters which you
+# will be able to change later in reconfiguration
+  configuration:
+    input.apihost: "openshift.redhat.com"
+    input.defaultdomain: "eil397"
+    configuration.imageId:    "ami-246ed34c"
+    configuration.hardwareId: "t1.micro"
+    configuration.locationId: "us-east-1"
+    configuration.login:      "ec2-user"
+    configuration.group: "default"
+# Root Application Interfaces.
+# Here we describe a interfaces with pins and their bindings on components interfaces
+# For binding using function bind(Component1#interface.pin, Component2#interface.pin)
+  interfaces:
+    configuration:
+      imageId:         bind(compute#configuration.imageId)
+      hardwareId:      bind(compute#configuration.hardwareId)
+      locationId:      bind(compute#configuration.locationId)
+      login:           bind(compute#configuration.login)
+      group:           bind(compute#configuration.group)
+    input: ###Input values we want to manage from the root application
+      apihost: "bind(workflow#input.apihost)"
+      defaultdomain: "bind(workflow#input.defaultdomain)"
+    app-meta:
+      application-pic: "bind(metadata#output.application-pic)"
+    openshift:
+      create-app: "bind(workflow#actions.create-app)"
+      deploy-app: "bind(workflow#actions.deploy-app)"
+      deployWarContext-app: "bind(workflow#actions.deployWarContext-app)"
+      delete-app: "bind(workflow#actions.delete-app)"
+ ####### Components definitions ########
+
+  components:
+    metadata:
+      type: cobalt.common.Constants
+      interfaces:
+        output:
+          application-pic:
+            type: publish-signal(map<string, object>)
+            name: ""
+      configuration:
+        configuration.values:
+          output.application-pic:
+            large: "http://upload.wikimedia.org/wikipedia/en/thumb/3/3a/OpenShift-LogoType.svg/432px-OpenShift-LogoType.svg.png"
+            small: "http://upload.wikimedia.org/wikipedia/en/thumb/3/3a/OpenShift-LogoType.svg/200px-OpenShift-LogoType.svg.png"
+            small-height: 80
+    compute:
+      type: compute.Instance
+####  Component workflow ####
+    workflow:
+      type: workflow.Instance ### It's a  component type  to run imperative workflow
+      interfaces: # Each component have interfaces wit pins
+        compute:
+          networks: consume-signal(map<string, map<string, string>>)
+          exec:     send-command(string command, int timeout => string stdOut, string stdErr => string stdOut, string stdErr, int exitCode)
+          put-file:   send-command(string filename, bytes payload)
+          get-file:   send-command(string filename => bytes payload) 
+        credentials:
+          password_openshift: consume-signal(string)  
+          login_openshift: consume-signal(string)
+          apihost_openshift: consume-signal(string) 
+          username_git: consume-signal(string)
+          useremail_git: consume-signal(string)   
+        input: # Contain pins with type: configuration().This type using for configuration parameters
+          apihost: 
+            type: configuration(string)
+            name: Apihost
+          defaultdomain: 
+            type: configuration(string)
+            name: Defaultdomain
+        actions:
+          create-app:
+             type: receive-command(string name, string git-uri, string app-branch => list<string> context)
+             name: Create Application
+          deploy-app:
+             type: receive-command(string name => string status)
+             name: Deploy Application
+          deployWarContext-app:
+             type: receive-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status)
+             name: Deploy Application with War and Context
+          delete-app:
+             type: receive-command(string name => string status)
+             name: Delete application
+        result:
+          status:
+             type: publish-signal(string)
+             name: Status
+      required:
+      - compute
+      - credentials
+      configuration:
+        configuration.workflows:
+
+          init: &init # main workflow used for init phase
+            steps:
+              get-env-props:
+                action: getSignals
+                output:
+                  props: result
+
+              getContext:
+                action: getInstanceContext
+                precedingPhases: [ get-env-props ]
+                output:
+                  instanceId: instanceId
+                  instanceName: instanceName
+
+            return: ### Values returned from workflow
+              status:
+                value: "status Ok"
+
+          launch: *init
+
+          create-app: ### Additional workflow to create application in openshift and return  list of endpoints
+            steps:
+              createApp:
+                action: execrun
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                       echo "OK"
+                output:
+                  context: stdout
+            return: ### Values returned from workflow
+              context:
+                value:
+                 - "Ok"
+
+          deploy-app: ### Additional workflow to  deploy application in Openshift by using git 
+            steps:
+              getContext:
+                action: getInstanceContext
+                output:
+                  instanceId: instanceId
+                  instanceName: instanceName
+            return: ### Values returned from workflow
+              status:
+                value: "contextStringOne"
+          deployWarContext-app: ### Additional workflow to deploy application in openshift with urls on war artefacts and context.xml
+            steps:
+              getContext:
+                action: getInstanceContext
+                output:
+                  instanceId: instanceId
+                  instanceName: instanceName
+            return: ### Values returned from workflow
+              status:
+                value: "contextStringOne"
+          delete-app: ### Additional workflow to delete application in OpenShift
+            steps:
+              deleteApp:
+                action: execrun
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command: 
+                  - bash -exc
+                  - |
+                       echo "Ok"
+                output:
+                  execRunOutput: stdout
+            return: ### Values returned from workflow
+              status:
+                value: "Ok"
+
+    envService:
+      type: reference.Service
+      interfaces:
+        output:
+          password_openshift: publish-signal(string)
+          login_openshift: publish-signal(string)
+          username_git: publish-signal(string)
+          useremail_git: publish-signal(string)
+          apihost_openshift: publish-signal(string)
+  bindings:
+  - [workflow#compute, compute]
+  - [envService, workflow]
