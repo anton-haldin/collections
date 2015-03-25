@@ -23,3 +23,26 @@ Qubell proposes the way how such information can be described - some specific an
 task definition v03:
 - describe how  OpenShift functionality can be used
 - modify exisen "Application Server"-level component. at this moment it uses tomcat , let it use openshift. 
+
+
+task definition v04 mvp definition:
+- create service component definition for Qubell which define minimal set of interfaces which can be mapped to existen components definitions
+  - current set of Application Server's actions/commands: 
+    - build-app 
+    - deploy-war
+    - deploy-libs
+    - reconfigure
+    - manage 
+  - minimal set of atomic actions in OpenShift (co-author: https://github.com/dieu): 
+    - create app
+    - deploy app
+    - delete app
+- changes for existen component definition should as minimal as possible:
+  - current hierarchy. java-starter depends on Application Server (tomcat), Load balancer(haproxy), Database (mysql)
+  - java starter, database, load balancer components should be not changed
+  - application server (tomcat) should be changed and should use interface of new OpenShift service
+- mapping between Application Server and OpenShift service:
+  - build app -> create-app (on init stage we don't have such information like git uri )
+  - deploy app -> deploy app
+- technical implementation by using command line tool (rhc) and bash scripts because one of main cretaria is speed of implementation just to plat with use case (PoC-like stage)
+- - simple implementation based on rest calls should be created to check possible production way for implemetation
