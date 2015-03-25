@@ -357,7 +357,7 @@ application:
       configuration:
         #__locator.application-id: "MySQL Server"
         #__locator.application-id: "Oracle DBxe"
-        __locator.application-id: "Database"
+        __locator.application-id: "Database NSN5"
       interfaces:
         input:
           db-port:
@@ -386,7 +386,7 @@ application:
     AppServer:
       type: reference.Submodule
       configuration:
-        __locator.application-id: "Application Server"
+        __locator.application-id: "Application Server NSN5"
       interfaces:
         input:
           operating-system:
@@ -428,7 +428,7 @@ application:
     LoadBalancer:
       type: reference.Submodule
       configuration:
-        __locator.application-id: "Load Balancer"
+        __locator.application-id: "Load Balancer NSN5"
       interfaces:
         haproxy:
           add-servers:
