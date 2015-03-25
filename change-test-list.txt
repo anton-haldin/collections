@@ -1,0 +1,6 @@
+
+List of changes and checks:
+- repo was created
+- component manifests were cloned
+- activity description was started (readme)
+- initial changes in manifests were checked
