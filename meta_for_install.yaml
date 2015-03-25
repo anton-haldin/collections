@@ -9,7 +9,9 @@ kit:
     - name: "Load Balancer NSN5"
       manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/component-haproxy.yml 
     - name: "Application Server NSN5"
-      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/component-tomcat-dev-QOS.yml 
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/component-tomcat-dev-QOS.yml
+    - name: "OpenShift Service NSN5"
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/qos.yaml 
   provider:
     name: "Qubell"
     link: http://qubell.com
