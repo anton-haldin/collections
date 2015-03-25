@@ -46,3 +46,13 @@ task definition v04 mvp definition:
   - deploy app -> deploy app
 - technical implementation by using command line tool (rhc) and bash scripts because one of main cretaria is speed of implementation just to plat with use case (PoC-like stage)
 - - simple implementation based on rest calls should be created to check possible production way for implemetation
+
+task definition v05 clarification based on ways to deploy java app in OpenShift:
+- there are few ways to deploy application:
+   - "git push" deployment style (aka heroku). change code, push to remote repo, build and deploy will be started automatically ( git hooks, mvn )
+   - "git push" deployment . push artefacts by using git 
+   - deployment artefact by using scp
+   - native application server deployment 
+- artefacts push by using git was choosen. artefacts already builded by existen configuration. one of artefcats is context.xml with mysql ip. mysql ip is already presented on this level as part of context.xml
+- new command should be created for OpenShift service - deploy with War and Context
+- artefacts should be published to be used in OpenShift service
