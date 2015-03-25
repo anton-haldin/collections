@@ -1,0 +1,123 @@
+application:
+  configuration:
+    input.openshift_api_endpoint: https://openshift.redhat.com/broker/rest/
+    input.password_openshift2: "12345"
+  interfaces:
+    input:
+      openshift_api_endpoint: "bind(getOpenShiftApiVersion#input.openshift_api_endpoint)"
+      password_openshift2: "bind(getOpenShiftApiVersion#input.password_openshift2)"
+    output:
+      api_version: "bind(getOpenShiftApiVersion#result.api-version)"
+      domains: "bind(getOpenShiftApiVersion#result.domains)"
+  components:
+    getOpenShiftApiVersion:
+      type: workflow.Instance
+      interfaces:
+        input:
+          openshift_api_endpoint: configuration(string)
+          password_openshift2: configuration(string)
+        credentials:
+          password_openshift: consume-signal(string)
+        result:
+          api-version: publish-signal(string)
+          domains: publish-signal(list<string>)
+      required: [credentials]
+      configuration:
+        configuration.workflows:
+          launch:
+            steps:
+              get-env-props:
+                action: getSignals
+                output:
+                  props: result
+              checkApiEndpointAndGetApiVersion:
+                action: restcall
+                precedingPhases: [ get-env-props ]
+                parameters:
+                  command: "{$.openshift_api_endpoint}api"
+                  method: GET
+                  auth:
+                    type: basic
+                    user: anton.haldin@gmail.com
+                    password: "{$.props.credentials.password_openshift}"
+                  contentType: application/json
+                  headers:
+                    User-Agent: "curl/7.30.0"
+                    Content-Type: "application/json"
+                    Accept: "*/*"
+                output:
+                  content: content
+              getDomainList:
+                action: restcall
+                precedingPhases: [ get-env-props ]
+                parameters:
+                  command: "{$.openshift_api_endpoint}domains"
+                  method: GET
+                  auth:
+                    type: basic
+                    user: anton.haldin@gmail.com
+                    password: "{$.props.credentials.password_openshift}"
+                  contentType: application/json
+                  headers:
+                    User-Agent: "curl/7.30.0"
+                    Content-Type: "application/json"
+                    Accept: "*/*"
+                output:
+                  content2: content
+              getAppList:
+                action: restcall
+                precedingPhases: [ getDomainList ]
+                parameters:
+                  command: "{$.openshift_api_endpoint}domain/eil397/applications"
+                  method: GET
+                  auth:
+                    type: basic
+                    user: anton.haldin@gmail.com
+                    password: "{$.props.credentials.password_openshift}"
+                  contentType: application/json
+                  headers:
+                    User-Agent: "curl/7.30.0"
+                    Content-Type: "application/json"
+                    Accept: "*/*"
+                output:
+                  content3: content
+              getContext:
+                action: getInstanceContext
+                precedingPhases: [ getAppList ]
+                output:
+                  instanceId: instanceId
+                  instanceName: instanceName
+              addEnvVariable:
+                action: restcall
+                precedingPhases: [ getContext ]
+                parameters:
+                  command: "{$.openshift_api_endpoint}application/54f4cd134382ec477d00009b/environment-variables"
+                  method: POST
+                  auth:
+                    type: basic
+                    user: anton.haldin@gmail.com
+                    password: "{$.props.credentials.password_openshift}"
+                  contentType: application/json
+                  headers:
+                    User-Agent: "curl/7.30.0"
+                    Content-Type: "application/json"
+                    Accept: "*/*"
+                  body:
+                    name: "QUBELL_INSTANCE_ID"
+                    value: "{$.instanceId}"
+                output:
+                  content4: content
+            return:
+              api-version:
+                value: "{$.content.version}"
+              domains:
+                value: "{$.content2.*.name}"
+              applications:
+                value: "{$.content3.*.name}"
+    envService:
+      type: reference.Service
+      interfaces:
+        output:
+          password_openshift: publish-signal(string)
+  bindings:
+    - [envService, getOpenShiftApiVersion]
