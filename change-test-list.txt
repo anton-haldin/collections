@@ -1,14 +1,16 @@
 
 List of changes and checks:
-- repo was created
-- component manifests were cloned
-- activity description was started (readme)
-- initial changes in manifests were checked. tag v01
-- mock/stub version of openshift service component was created
-- dependecy was added to application server component
-- openshift service command calls was added to application server
-- openshift service was added to meta for install
-- latest changes were checked .tag v02
-- implementation was added to openshift service
-- implementation was added to application server component
+3/16/2014 - repo was created
+3/25/2014 - component manifests were cloned
+3/25/2014 - activity description was started (readme)
+3/25/2014 - initial changes in manifests were checked. tag v01
+3/25/2014 - mock/stub version of openshift service component was created
+3/25/2014 - dependecy was added to application server component
+3/25/2014 - openshift service command calls was added to application server
+3/25/2014 - openshift service was added to meta for install
+3/25/2014 - latest changes were checked .tag v02
+3/25/2014 - implementation was added to openshift service
+3/25/2014 - implementation was added to application server component
+3/25/2014 - latest changes were checked. tag v03 . PetClinic application works in Hybrid Cloud: haproxy, mysql in AWS EC2, spring app in OpenShift.
+3/25/2014 - description of current state was added with list of dependencies and specifics/defects/limitations.
 
