@@ -1,0 +1,21 @@
+policies:
+  provisionVms.publicKeyId: xxxxxxxxxxxxxxxx 
+  provisionVms.quantity: '1'
+  provisionVms.securityGroup: default
+markers: []
+properties:
+  login_openshift:
+    type: string
+    value: user@mail.com
+  apihost_openshift:
+    type: string
+    value: openshift.redhat.com
+  password_openshift:
+    type: string
+    value: FriendMar1
+  useremail_git:
+    type: string
+    value: user@mail.com
+  username_git:
+    type: string
+    value: User Name
