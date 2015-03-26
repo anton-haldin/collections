@@ -11,18 +11,20 @@ Abstract:
 
 
 Structure:
-- README (face page)
+- README (face page with two pictures that looks good in raw format)
 - README-part2 (more words)
 - INSTALL (how to)
-- change-test-list
+- change-test-list.txt
 
 - manifests:
-  - starter-java-web (petclinic) (clonned from repo, minor changes)
-  - component-haproxy (clonned from parent repo)
-  - component-mysql-dev (clonned from partent repo)
-  - component-tomcat-dev (modified to support OpenShift Service)
-  - example Openshift service based on rest calls (pure and lightweght proxy service)
+  - starter-java-web.yml (petclinic) (clonned from repo, minor changes)
+  - component-haproxy.yml (clonned from parent repo)
+  - component-mysql-dev.yml (clonned from partent repo)
+  - component-tomcat-dev.yml (modified to support OpenShift Service)
+  - MiracleFever.yaml - example Openshift service based on rest calls (pure and lightweght proxy service)
   - example OpenShift service based on command line tool and bash (proxy service that add OpenShift functionality to Qubell)
+  - meta_for_install.yaml (links on manifests for install.md)
+  - environment_export.yaml (example with environment properties)
 
 
 Picture #1 Hybrid Cloud
