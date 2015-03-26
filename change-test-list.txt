@@ -3,4 +3,12 @@ List of changes and checks:
 - repo was created
 - component manifests were cloned
 - activity description was started (readme)
-- initial changes in manifests were checked
+- initial changes in manifests were checked. tag v01
+- mock/stub version of openshift service component was created
+- dependecy was added to application server component
+- openshift service command calls was added to application server
+- openshift service was added to meta for install
+- latest changes were checked .tag v02
+- implementation was added to openshift service
+- implementation was added to application server component
+
