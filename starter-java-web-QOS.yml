@@ -113,10 +113,9 @@ application:
             input.lib-uri: ["http://repo1.maven.org/maven2/org/apache/tomcat/dbcp/6.0.26/dbcp-6.0.26.jar", "http://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.6/mysql-connector-java-5.1.6.jar", "https://dl.dropboxusercontent.com/u/250836/ojdbc6.jar"]
 
             configuration.triggers:
-              tomcat.app-hosts: app-scale
               input.app-fork: rebuild-app
               input.app-branch: rebuild-app
-
+#              tomcat.app-hosts: app-scale
             configuration.propagateStatus: [ app-scale, rebuild-app ]
 
             configuration.workflows:
@@ -159,14 +158,14 @@ application:
                       phase: deploy-libs
                       precedingPhases: [ get-env-props, build-app ]
                       parameters:
-                        commandCallTimeout: 5 minutes
+                        commandCallTimeout: 10 minutes
                         lib-uri: "{$.lib-uri}"
                   - deploy-war:
                       action: tomcat.deploy-war
                       phase: deploy-war
                       precedingPhases: [ upload-sql, build-app, deploy-libs ]
                       parameters:
-                        commandCallTimeout: 5 minutes
+                        commandCallTimeout: 10 minutes
                         uri: "{$.warlist[0]}"
                         path: "/"
                         context-attrs: {
@@ -239,14 +238,14 @@ application:
                       phase: deploy-libs
                       precedingPhases: [ get-env-props, build-app ]
                       parameters:
-                        commandCallTimeout: 5 minutes
+                        commandCallTimeout: 10 minutes
                         lib-uri: "{$.lib-uri}"
                   - deploy-war:
                       action: tomcat.deploy-war
                       phase: deploy-war
                       precedingPhases: [ build-app, deploy-libs ]
                       parameters:
-                        commandCallTimeout: 5 minutes
+                        commandCallTimeout: 10 minutes
                         uri: "{$.warlist[0]}"
                         path: "/"
                         context-attrs: {
@@ -318,7 +317,7 @@ application:
                       phase: deploy-war
                       precedingPhases: [ build-app, deploy-libs ]
                       parameters:
-                        commandCallTimeout: 5 minutes
+                        commandCallTimeout: 10 minutes
                         uri: "{$.warlist[0]}"
                         path: "/"
                         context-attrs: {
