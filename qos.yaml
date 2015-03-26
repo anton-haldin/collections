@@ -229,6 +229,18 @@ application:
                       cat $${{HOME}}/.openshift_service/{$.name}  | grep "URL" | cut -d":" -f2- | cut -d'@' -f1 | cut -d'/' -f3
                 output:
                   getFqdn: stdout
+              checkFqdn:
+                action: execrun
+                precedingPhases: [ getFqdn ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      while true; do sleep 1;ping -c1 {$.getFqdn[*][0]}  || continue;break ;done;
+                output:
+                  checkFqdn: stdout
             return: ### Values returned from workflow
               context:
                 value:
