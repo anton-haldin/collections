@@ -56,3 +56,44 @@ task definition v05 clarification based on ways to deploy java app in OpenShift:
 - artefacts push by using git was choosen. artefacts already builded by existen configuration. one of artefcats is context.xml with mysql ip. mysql ip is already presented on this level as part of context.xml
 - new command should be created for OpenShift service - deploy with War and Context
 - artefacts should be published to be used in OpenShift service
+
+Initial estimation for task was about 2-3 days. First working version was created after 3 days. Additional two iterations were spent on debug and exception handling. 
+
+
+Current list of dependecies:
+-  Qubell account ( free account include AWS EC2 account)
+- AWS account (cloud account should be configured in Qubell)
+- AWS EC2 network configuration. security should allow income tcp 22, 8080, 80, 3306
+- AWS EC2 network configuration: elastic ip.
+- OpenShift account (openshift creadentials and endpoints should be added)
+- Amazon AMI Linux (configuration was tested with latest Amazon AMI)
+- Amazon package repositories (many packages)
+- chef client (should be accessible in execution time)
+- Qubell cookbooks for PetClinic example (should be accesible in execution time)
+- rhc gem 
+- OpenShift domain name should be created
+
+Current status:
+- PetClinic is working with OpenShift Service:
+- -  launch works fine.
+- -  rebuild app also works.
+- -  app-scale does not work.
+- i'm checking latest changes and will update status tomorrow
+
+Current todo list:
+- clean up workflows in OpenShift service.
+- add additional expetion handling and proper status string in OpenShift service
+- experiment with returning json from execrun steps in OpenShift service
+- implement deployment through scp
+- test deployment without context.xml deployment
+- add test automation for openshift service
+ 
+Current implementation's specifics/limitation/defects:
+- list of cartridges is hardcoded
+- mysql ip  should be injected through environment variables. nice to have
+- application in openshift creation on build-app of application server .
+- one trigger was removed from PetClinic manifest.  trigger on app-host change. because after deplyment in OpenShift app-hosts should be updated without build-app retriggering, timeout for few commands was changed
+- integration with openstift works through command line tool (designed)
+- ssh keys are generated every time with command line tool setup
+- current Application server manifest is based on stable version of
+this manifest. there is fresh version (backlog)
