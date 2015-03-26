@@ -31,7 +31,7 @@ application:
       deploy-war: "bind(workflow#actions.deploy-war)"
       reconfigure: "bind(workflow#actions.reconfigure)"
       manage-service: "bind(workflow#actions.manage-service)"
-      app-hosts: "bind(workflow#result.app-hosts)"
+      app-hosts: "bind(workflow#result.app-hosts2)"
       app-port: "bind(workflow#result.app-port)"
 
  ####### Components definitions ########
@@ -167,15 +167,37 @@ application:
                         revision: "{$.app-branch}"
                   output:
                     chefAttrs: chefState
+              - getContext:
+                  action: getInstanceContext
+                  output:
+                    instanceId: instanceId
+                    instanceName: instanceName
+              - getAppName:
+                  action: execrun
+                  precedingPhases: [ getContext]
+                  parameters:
+                    roles: [ default ]
+                    isSudo: true
+                    command:
+                    - bash -exc
+                    - |
+                        NAME2=`echo "{$.instanceId}" |cut -d'.' -f1`
+                        i=$$(($${{#NAME2}}-5))
+                        SHORTNAME2=`echo "$${{NAME2:$${{i}}:5}}"`
+                        GITURI=`echo "{$.git-uri}" `
+                        NAME1=`echo "$${{GITURI}}" | cut -d'/' -f5 | cut -d'.' -f1 | tr -d '-'`
+                        echo $${{NAME1}}db$${{SHORTNAME2}}
+                  output:
+                    getNamexec: stdout    
               - createAppInOpenshift:
                   action: openshift.create-app
-                  precedingPhases: [ build-app]
+                  precedingPhases: [ build-app, getAppName]
                   parameters:
                     ignoreFail: true
                     commandCallTimeout: 600
-                    name: "test"
-                    git-uri: "test"
-                    app-branch: "test"
+                    name: "{$.getNamexec[*][0]}"
+                    git-uri: "{$.git-uri}"
+                    app-branch: "{$.app-branch}"
                   output:
                     deployOSresult: context
             return: ### Values returned from workflow
@@ -217,14 +239,58 @@ application:
                         context:
                           context_attrs: "{$.context-attrs}"
                           context_nodes: "{$.context-nodes}"
+              - getContext:
+                  action: getInstanceContext
+                  output:
+                    instanceId: instanceId
+                    instanceName: instanceName
+              - deployArtefactsOnHttp:
+                  action: execrun
+                  precedingPhases: [ deploy-war, getContext]
+                  parameters:
+                    roles: [ default ]
+                    isSudo: true
+                    command:
+                    - bash -exc
+                    - |
+                        NAME2=`echo "{$.instanceId}" |cut -d'.' -f1`
+                        i=$$(($${{#NAME2}}-5))
+                        SHORTNAME2=`echo "$${{NAME2:$${{i}}:5}}"`
+                        GITURI=`cat /tmp/webapp/.git/config  | grep url | cut -d '=' -f2`
+                        NAME1=`echo "$${{GITURI}}" | cut -d'/' -f5 | cut -d'.' -f1 | tr -d '-'`
+                        yum -y install httpd
+                        service httpd start
+                        cp /etc/tomcat6/Catalina/localhost/ROOT.xml /var/www/html/
+                        cp /tmp/mvn/petclinic-1.0.0-SNAPSHOT.war /var/www/html/
+                        chown -R apache /var/www/html/
+                        echo $${{NAME1}}db$${{SHORTNAME2}}
+                  output:
+                    deployArtefactsOnHttpExec: stdout           
+              - getAppName:
+                  action: execrun
+                  precedingPhases: [ deployArtefactsOnHttp]
+                  parameters:
+                    roles: [ default ]
+                    isSudo: true
+                    command:
+                    - bash -exc
+                    - |
+                        NAME2=`echo "{$.instanceId}" |cut -d'.' -f1`
+                        i=$$(($${{#NAME2}}-5))
+                        SHORTNAME2=`echo "$${{NAME2:$${{i}}:5}}"`
+                        GITURI=`cat /tmp/webapp/.git/config  | grep url | cut -d '=' -f2`
+                        NAME1=`echo "$${{GITURI}}" | cut -d'/' -f5 | cut -d'.' -f1 | tr -d '-'`
+                        echo $${{NAME1}}db$${{SHORTNAME2}}
+                  output:
+                    getNamexec: stdout    
               - deployOpnshift:
                   action: openshift.deployWarContext-app
-                  precedingPhases: [ deploy-war]
+                  precedingPhases: [ getAppName]
                   parameters:
                     commandCallTimeout: 600
-                    name: "test"
-                    bucket_url_with_war: "test"
-                    bucket_url_with_context: "test"
+                    name: "{$.getNamexec[*][0]}"
+                    bucket_url_with_war: "http://{$.app-hosts[0]}/petclinic-1.0.0-SNAPSHOT.war"
+                    bucket_url_with_context: "http://{$.app-hosts[0]}/ROOT.xml"
                   output:
                     deployOSresult: status
           reconfigure: ### Additional workflow for reconfiguring Tomcat in case changing app-port and java-opts
@@ -257,7 +323,41 @@ application:
                         manage:
                           services: ["tomcat6"]
                           action: "{$.service-action}"
-                      
+          destroy:
+            steps:
+              - getContext:
+                  action: getInstanceContext
+                  output:
+                    instanceId: instanceId
+                    instanceName: instanceName
+              - getAppName:
+                  action: execrun
+                  precedingPhases: [ getContext]
+                  parameters:
+                    roles: [ default ]
+                    isSudo: true
+                    command:
+                    - bash -exc
+                    - |
+                        NAME2=`echo "{$.instanceId}" |cut -d'.' -f1`
+                        i=$$(($${{#NAME2}}-5))
+                        SHORTNAME2=`echo "$${{NAME2:$${{i}}:5}}"`
+                        GITURI=`cat /tmp/webapp/.git/config  | grep url | cut -d '=' -f2`
+                        NAME1=`echo "$${{GITURI}}" | cut -d'/' -f5 | cut -d'.' -f1 | tr -d '-'`
+                        echo $${{NAME1}}db$${{SHORTNAME2}}
+                  output:
+                    getNamexec: stdout    
+              - deleteAppInOpenshift:
+                  action: openshift.delete-app
+                  precedingPhases: [ getAppName]
+                  parameters:
+                    commandCallTimeout: 600
+                    name: "{$.getNamexec[*][0]}"
+                  output:
+                    deployOSresult: status
+              - destroyVMS:
+                  action: "destroyVms"
+                  precedingPhases: [ deleteAppInOpenshift ]                          
 ####  Component openshift ####
     openshift:
       type: reference.Service
@@ -275,3 +375,9 @@ application:
           delete-app:
             type: receive-command(string name => string status)
             name: Delete Application
+
+
+#                        curl -X PUT --data-binary @/tmp/mvn/petclinic-1.0.0-SNAPSHOT.war  http://storage.googleapis.com/petclinic/petclinic-1.0.0-SNAPSHOT.war
+#                        curl -X PUT --data-binary @/etc/tomcat6/Catalina/localhost/ROOT.xml http://storage.googleapis.com/petclinic/context.xml
+#                        curl -X PUT --data-binary @/tmp/mvn/petclinic-1.0.0-SNAPSHOT.war  http://storage.googleapis.com/petclinic/petclinic-1.0.0-SNAPSHOT.war
+
