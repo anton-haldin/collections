@@ -31,7 +31,7 @@ application:
       deploy-war: "bind(workflow#actions.deploy-war)"
       reconfigure: "bind(workflow#actions.reconfigure)"
       manage-service: "bind(workflow#actions.manage-service)"
-      app-hosts: "bind(workflow#result.app-hosts2)"
+      app-hosts: "bind(workflow#result.app-hosts)"
       app-port: "bind(workflow#result.app-port)"
 
  ####### Components definitions ########
