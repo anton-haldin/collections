@@ -109,6 +109,47 @@ application:
                   instanceId: instanceId
                   instanceName: instanceName
 
+              initFirstStep:
+                action: execrun
+                precedingPhases: [ getContext ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: true
+                  command: 
+                  - bash -exc
+                  - |
+                      yum install -y git
+                      yum install -y gem
+                      gem install rhc
+                      echo "  StrictHostKeyChecking no" >> /etc/ssh/ssh_config 
+                output:
+                  clientKey: stdout
+              initSecondStep:
+                action: execrun
+                precedingPhases: [ initFirstStep ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command: 
+                  - bash -exc
+                  - |
+                      echo -e "yes\nkey{$.instanceId}" | /usr/local/bin/rhc setup --server openshift.redhat.com -l {$.props.credentials.login_openshift} -p {$.props.credentials.password_openshift} --create-token
+                      mkdir $${{HOME}}/.openshift_service
+                output:
+                  clientKey2: stdout
+              initGit:
+                action: execrun
+                precedingPhases: [ initSecondStep ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command: 
+                  - bash -exc
+                  - |
+                      git config --global user.name "{$.props.credentials.username_git}"
+                      git config --global {$.props.credentials.useremail_git}
+                output:
+                  outPutGitInit: stdout
             return: ### Values returned from workflow
               status:
                 value: "status Ok"
@@ -125,14 +166,77 @@ application:
                   command:
                   - bash -exc
                   - |
-                       echo "OK"
+                       /usr/local/bin/rhc app-show {$.name} || echo -e "yes\n" | /usr/local/bin/rhc app-create {$.name} tomcat6 > $${{HOME}}/.openshift_service/{$.name} ;
                 output:
                   context: stdout
+              getGitUri:
+                action: execrun
+                precedingPhases: [ createApp ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      cat $${{HOME}}/.openshift_service/{$.name} | grep "Git" | cut -d":" -f2-
+                output:
+                  getUriExec: stdout
+              getURL:
+                action: execrun
+                precedingPhases: [ createApp ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      cat $${{HOME}}/.openshift_service/{$.name} | grep "URL" | cut -d":" -f2-
+                output:
+                  getUrlExec: stdout
+              getSSH:
+                action: execrun
+                precedingPhases: [ createApp ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      cat $${{HOME}}/.openshift_service/{$.name}  | grep "SSH" | cut -d":" -f2-
+                output:
+                  getSshExec: stdout
+              getAppId:
+                action: execrun
+                precedingPhases: [ createApp ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      cat $${{HOME}}/.openshift_service/{$.name}  | grep "SSH" | cut -d":" -f2- | cut -d'@' -f1
+                output:
+                  getAppIdExec: stdout
+              getFqdn:
+                action: execrun
+                precedingPhases: [ createApp ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      cat $${{HOME}}/.openshift_service/{$.name}  | grep "URL" | cut -d":" -f2- | cut -d'@' -f1 | cut -d'/' -f3
+                output:
+                  getFqdn: stdout
             return: ### Values returned from workflow
               context:
                 value:
-                 - "Ok"
-
+                 - "{$.getFqdn[*][0]}"
+                 - "{$.getUrlExec[*][0]}"
+                 - "{$.getUriExec[*][0]}" 
+                 - "{$.getSshExec[*][0]}"
+                 - "{$.getAppIdExec[*][0]}"
           deploy-app: ### Additional workflow to  deploy application in Openshift by using git 
             steps:
               getContext:
@@ -140,6 +244,51 @@ application:
                 output:
                   instanceId: instanceId
                   instanceName: instanceName
+              getGitUri:
+                action: execrun
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      /usr/local/bin/rhc app-show -a {$.name} | grep "Git" | cut -d":" -f2-
+                output:
+                  execRunOutput: stdout
+              cloneRepo:
+                action: execrun
+                precedingPhases: [ getGitUri, getContext ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      if [ -d $${{HOME}}/{$.name} ]; then rm -Rf {$.name};fi;
+                      git clone `/usr/local/bin/rhc app-show -a {$.name} | grep "Git" | cut -d":" -f2-` $${{HOME}}/{$.name}
+                      /usr/local/bin/rhc app-show -a {$.name} | grep "Git" | cut -d":" -f2-
+                output:
+                  execRunOutput2: stdout
+              deployApp2:
+                  action: execrun
+                  precedingPhases: [ cloneRepo ]
+                  parameters:
+                    roles: [ compute ]
+                    isSudo: false
+                    command:
+                    - bash -exc
+                    - |
+                        cd $${{HOME}}/{$.name}
+                        git remote add upstream -m master git://github.com/qubell/starter-java-web.git
+                        git pull -q -s recursive -X theirs upstream master
+                        wget -O .openshift/config/context.xml http://storage.googleapis.com/petclinic/context.xml
+                        echo "{$.instanceId} `date`" > deployment
+                        git add .
+                        git commit -m "deployment " 
+                        git push
+                        rm -Rf $${{HOME}}/{$.name}
+                  output:
+                    execRunOutput3: stdout 
             return: ### Values returned from workflow
               status:
                 value: "contextStringOne"
@@ -150,6 +299,53 @@ application:
                 output:
                   instanceId: instanceId
                   instanceName: instanceName
+              getGitUri:
+                action: execrun
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      /usr/local/bin/rhc app-show -a {$.name} | grep "Git" | cut -d":" -f2-
+                output:
+                  execRunOutput: stdout
+              cloneRepo:
+                action: execrun
+                precedingPhases: [ getGitUri, getContext ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                      if [ -d $${{HOME}}/{$.name} ]; then rm -Rf {$.name};fi;
+                      git clone `/usr/local/bin/rhc app-show -a {$.name} | grep "Git" | cut -d":" -f2-` $${{HOME}}/{$.name}
+                      /usr/local/bin/rhc app-show -a {$.name} | grep "Git" | cut -d":" -f2-
+                output:
+                  execRunOutput2: stdout
+              deployApp2:
+                  action: execrun
+                  precedingPhases: [ cloneRepo ]
+                  parameters:
+                    roles: [ compute ]
+                    isSudo: false
+                    command:
+                    - bash -exc
+                    - |
+                        cd $${{HOME}}/{$.name}
+                        rm -f pom.xml
+                        rm -Rf src
+                        rm -Rf webapps/*
+                        wget -O webapps/ROOT.war {$.bucket_url_with_war}
+                        wget -O .openshift/config/context.xml {$.bucket_url_with_context}
+                        echo "{$.instanceId} `date`" > deployment
+                        git add .
+                        git commit -m "deployment " 
+                        git push
+                        rm -Rf $${{HOME}}/{$.name}
+                  output:
+                    execRunOutput3: stdout 
             return: ### Values returned from workflow
               status:
                 value: "contextStringOne"
@@ -163,13 +359,36 @@ application:
                   command: 
                   - bash -exc
                   - |
-                       echo "Ok"
+                       /usr/local/bin/rhc app-show {$.name} && /usr/local/bin/rhc app delete -a {$.name} --confirm  && rm -f $${{HOME}}/.openshift_service/{$.name};
+                       if [ -d {$.name} ]; then rm -Rf {$.name};fi;
                 output:
                   execRunOutput: stdout
             return: ### Values returned from workflow
               status:
                 value: "Ok"
+### Destory should delete all created application by this service
+### Current implementation
+### It should delete app in OpenShift 
+### Source for the list of created application - filesystem. directory 
+          destroy:
+            steps:
+              destroyApps:
+                action: execrun
+                parameters:
+                  roles: [ compute ]
+                  isSudo: false
+                  command:
+                  - bash -exc
+                  - |
+                       for appname in `ls $${{HOME}}/.openshift_service/`;
+                       do /usr/local/bin/rhc app delete -a $${{appname}} --confirm;
+                       done;
+                output:
+                  execRunOutput2: stdout
 
+              destroyVMS:
+                action: "destroyVms"
+                precedingPhases: [ destroyApps ]
     envService:
       type: reference.Service
       interfaces:
@@ -182,3 +401,22 @@ application:
   bindings:
   - [workflow#compute, compute]
   - [envService, workflow]
+
+# NOTES:
+# rhc not found thats is why full path was used 
+# gem2.1 on some linux after you install gem
+# many variables are hardcoded. deploy-app workflow
+# variable name should be cleaned
+# create app is not using few input parameters. should be cleaned up 
+#
+#what is working in current version:
+#- Qubell OpenShift Service
+#- - create app with a parameter name
+#- - deploy app with a parameter name
+#- - delete app with a http link on war and context
+#- - launch initialize openshift command line tool
+#- - destroy service deletes all create apps
+
+#current limitations:
+#- list of cartridges is static list in manifest of openshift service
+
