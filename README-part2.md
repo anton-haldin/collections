@@ -61,7 +61,7 @@ Initial estimation for task was about 2-3 days. First working version was create
 
 
 Current list of dependecies:
--  Qubell account ( free account include AWS EC2 account)
+- Qubell account ( free account include AWS EC2 account)
 - AWS account (cloud account should be configured in Qubell)
 - AWS EC2 network configuration. security should allow income tcp 22, 8080, 80, 3306
 - AWS EC2 network configuration: elastic ip.
@@ -76,15 +76,15 @@ Current list of dependecies:
 Current status:
 - PetClinic is working with OpenShift Service:
 - -  launch works fine.
-- -  rebuild app also works.
+- -  rebuild-app works fine.
 - -  app-scale does not work.
-- i'm checking latest changes and will update status tomorrow
+
 
 Current todo list:
 - clean up workflows in OpenShift service.
-- add additional expetion handling and proper status string in OpenShift service
+- add additional exception handling and proper status string in OpenShift service
 - experiment with returning json from execrun steps in OpenShift service
-- implement deployment through scp
+- implement deployment to OpenShift through scp
 - test deployment without context.xml deployment
 - add test automation for openshift service
  
@@ -97,3 +97,6 @@ Current implementation's specifics/limitation/defects:
 - ssh keys are generated every time with command line tool setup
 - current Application server manifest is based on stable version of
 this manifest. there is fresh version (backlog)
+
+Questions:
+- lifecycle application entity in OpenShift 
