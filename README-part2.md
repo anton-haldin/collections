@@ -89,6 +89,7 @@ Current todo list:
 - add test automation for openshift service
  
 Current implementation's specifics/limitation/defects:
+- possible infinite cycle in create-app step checkFqdn. need to add timeout . 
 - list of cartridges is hardcoded
 - mysql ip  should be injected through environment variables. nice to have
 - application in openshift creation on build-app of application server .
@@ -100,3 +101,16 @@ this manifest. there is fresh version (backlog)
 
 Questions:
 - lifecycle application entity in OpenShift 
+
+
+Failed which were happened in process of testing:
+- 'yum update => python -c "import yum" => failed '. was caused by changes in amazon package repository. was fixed.
+  - https://forums.aws.amazon.com/thread.jspa?messageID=610503
+- mvn repo was not available :
+  >> Ran cd /tmp/webapp; mvn clean package -Dmaven.test.skip=true returned 1
+  >> (http://repository.springsource.com/maven/bundles/external): Connect to repository.springsource.com:80 [repository.
+  >> springsource.com/54.231.17.169] failed: Connection timed out -> [Help 1]
+-  "gem install rhc" failed
+  >> ERROR:  While executing gem ... (Gem::DependencyError)
+  >>    Unable to resolve dependencies: rhc requires highline (~> 1.6.11); commander requires highline (~> 1.7.1)
+https://github.com/openshift/rhc/issues/678
