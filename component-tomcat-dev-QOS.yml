@@ -95,8 +95,8 @@ application:
              type: receive-command(string service-action)
              name: Manage service
         openshift:
-          create-app: send-command(string name, string git-uri, string app-branch => list<string> context)
-          deploy-app: send-command(string name => string status)
+          create-app: send-command(string name => list<string> context)
+          deploy-app: send-command(string name, string url_with_context  => string status)
           deployWarContext-app: send-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status) 
           delete-app: send-command(string name => string status)
         result:
@@ -196,8 +196,6 @@ application:
                     ignoreFail: true
                     commandCallTimeout: 600
                     name: "{$.getNamexec[*][0]}"
-                    git-uri: "{$.git-uri}"
-                    app-branch: "{$.app-branch}"
                   output:
                     deployOSresult: context
             return: ### Values returned from workflow
@@ -364,10 +362,10 @@ application:
       interfaces:
         actions:
           create-app:
-            type: receive-command(string name, string git-uri, string app-branch => list<string> context)
+            type: receive-command(string name => list<string> context)
             name: Create Application
           deploy-app:
-            type: receive-command(string name => string status)
+            type: receive-command(string name, string url_with_context  => string status)
             name: Deploy Application
           deployWarContext-app:
              type: receive-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status)

@@ -77,7 +77,7 @@ application:
              type: receive-command(string name, string git-uri, string app-branch => list<string> context)
              name: Create Application
           deploy-app:
-             type: receive-command(string name => string status)
+             type: receive-command(string name, string url_with_context => string status)
              name: Deploy Application
           deployWarContext-app:
              type: receive-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status)
@@ -166,7 +166,8 @@ application:
                   command:
                   - bash -exc
                   - |
-                       /usr/local/bin/rhc app-show {$.name} || echo -e "yes\n" | /usr/local/bin/rhc app-create {$.name} tomcat6 > $${{HOME}}/.openshift_service/{$.name} ;
+                       /usr/local/bin/rhc app-show {$.name} || echo -e "yes\n" | /usr/local/bin/rhc app-create {$.name} tomcat6 > $${{HOME}}/.openshift_service/{$.name} 2> /tmp/error;
+                       if [ $? -eq 0 ]; then echo '{ result: "Ok"}';else echo '{ result: "Not ok"}';fi;
                 output:
                   context: stdout
               getGitUri:
