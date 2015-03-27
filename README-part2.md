@@ -113,4 +113,5 @@ Failed which were happened in process of testing:
 -  "gem install rhc" failed
   >> ERROR:  While executing gem ... (Gem::DependencyError)
   >>    Unable to resolve dependencies: rhc requires highline (~> 1.6.11); commander requires highline (~> 1.7.1)
-https://github.com/openshift/rhc/issues/678
+  https://github.com/openshift/rhc/issues/678
+  http://help.rubygems.org/discussions/problems/20587-gem-install-rhc-failed-gemdependencyerror/autosuggest
