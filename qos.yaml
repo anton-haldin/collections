@@ -120,7 +120,7 @@ application:
                   - |
                       yum install -y git
                       yum install -y gem
-                      gem install rhc
+                      gem install rhc -f
                       echo "  StrictHostKeyChecking no" >> /etc/ssh/ssh_config 
                 output:
                   clientKey: stdout
