@@ -74,11 +74,11 @@ application:
             name: Defaultdomain
         actions:
           create-app:
-             type: receive-command(string name, string git-uri, string app-branch => list<string> context)
+             type: receive-command(string name => list<string> context)
              name: Create Application
           deploy-app:
              type: receive-command(string name, string url_with_context => string status)
-             name: Deploy Application
+             name: Deploy Application by given name and url for file with context
           deployWarContext-app:
              type: receive-command(string name, string bucket_url_with_war, string bucket_url_with_context => string status)
              name: Deploy Application with War and Context
@@ -167,7 +167,7 @@ application:
                   - bash -exc
                   - |
                        /usr/local/bin/rhc app-show {$.name} || echo -e "yes\n" | /usr/local/bin/rhc app-create {$.name} tomcat6 > $${{HOME}}/.openshift_service/{$.name} 2> /tmp/error;
-                       if [ $? -eq 0 ]; then echo '{ result: "Ok"}';else echo '{ result: "Not ok"}';fi;
+                       if [ $${{?}} -eq 0 ]; then echo '{ result: "Ok"}';else echo '{ result: "Not ok"}';fi;
                 output:
                   context: stdout
               getGitUri:
@@ -294,7 +294,7 @@ application:
                         cd $${{HOME}}/{$.name}
                         git remote add upstream -m master git://github.com/qubell/starter-java-web.git
                         git pull -q -s recursive -X theirs upstream master
-                        wget -O .openshift/config/context.xml http://storage.googleapis.com/petclinic/context.xml
+                        wget -O .openshift/config/context.xml {$.url_with_context}
                         echo "{$.instanceId} `date`" > deployment
                         git add .
                         git commit -m "deployment " 
