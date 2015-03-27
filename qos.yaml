@@ -167,7 +167,7 @@ application:
                   - bash -exc
                   - |
                        /usr/local/bin/rhc app-show {$.name} || echo -e "yes\n" | /usr/local/bin/rhc app-create {$.name} tomcat6 > $${{HOME}}/.openshift_service/{$.name} 2> /tmp/error;
-                       if [ $${{?}} -eq 0 ]; then echo '{ result: "Ok"}';else echo '{ result: "Not ok"}';fi;
+                       if [ $${{?}} -eq 0 ]; then echo '{{ result: "Ok"}}';else echo '{{ result: "Not ok"}}';fi;
                 output:
                   context: stdout
               getGitUri:
@@ -291,20 +291,21 @@ application:
                     command:
                     - bash -exc
                     - |
-                        cd $${{HOME}}/{$.name}
-                        git remote add upstream -m master git://github.com/qubell/starter-java-web.git
-                        git pull -q -s recursive -X theirs upstream master
-                        wget -O .openshift/config/context.xml {$.url_with_context}
-                        echo "{$.instanceId} `date`" > deployment
-                        git add .
-                        git commit -m "deployment " 
-                        git push
-                        rm -Rf $${{HOME}}/{$.name}
+                        cd $${{HOME}}/{$.name} > /tmp/bash_output 2> /tmp/bash_error
+                        git remote add upstream -m master git://github.com/qubell/starter-java-web.git >> /tmp/bash_output 2>> /tmp/bash_error
+                        git pull -q -s recursive -X theirs upstream master >> /tmp/bash_output 2>> /tmp/bash_error
+                        wget -O .openshift/config/context.xml {$.url_with_context} >> /tmp/bash_output 2>> /tmp/bash_error
+                        echo "{$.instanceId} `date`" > deployment 2>> /tmp/bash_error
+                        git add . >> /tmp/bash_output 2>> /tmp/bash_error
+                        git commit -m "deployment " >> /tmp/bash_output 2>> /tmp/bash_error
+                        git push >> /tmp/bash_output 2>> /tmp/bash_error
+                        rm -Rf $${{HOME}}/{$.name} >> /tmp/bash_output 2>> /tmp/bash_error
+                        if [ $${{?}} -eq 0 ]; then echo '{{ result: "Ok"}}';else echo '{{ result: "Not ok"}}';fi;
                   output:
                     execRunOutput3: stdout 
             return: ### Values returned from workflow
               status:
-                value: "contextStringOne"
+                value: "{$.execRunOutput3[*][0][0]}"
           deployWarContext-app: ### Additional workflow to deploy application in openshift with urls on war artefacts and context.xml
             steps:
               getContext:
