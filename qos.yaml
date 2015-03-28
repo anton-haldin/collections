@@ -120,6 +120,7 @@ application:
                   - |
                       yum install -y git
                       yum install -y gem
+                      gem update
                       gem install rubygems-update
                       update_rubygems
                       gem install rhc
