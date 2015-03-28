@@ -2,16 +2,16 @@ kit:
   name: "PetClinic"
   link: https://github.com/qubell/starter-java-web
   applications:
-    - name: "PetClinic NSN5"
-      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/starter-java-web-QOS.yml 
-    - name: "Database NSN5"
-      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/component-mysql-dev.yml 
-    - name: "Load Balancer NSN5"
-      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/component-haproxy.yml 
-    - name: "Application Server NSN5"
-      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/component-tomcat-dev-QOS.yml
-    - name: "OpenShift Service NSN5"
-      manifest: https://raw.githubusercontent.com/anton-haldin/collections/master/qos.yaml 
+    - name: "PetClinic NSN8"
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/starter-java-web-QOS.yml 
+    - name: "Database NSN8"
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/component-mysql-dev.yml 
+    - name: "Load Balancer NSN8"
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/component-haproxy.yml 
+    - name: "Application Server NSN8"
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/component-tomcat-dev-QOS.yml
+    - name: "OpenShift Service NSN8"
+      manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/qos.yaml 
   provider:
     name: "Qubell"
     link: http://qubell.com
