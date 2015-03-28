@@ -108,8 +108,7 @@ application:
                 output:
                   instanceId: instanceId
                   instanceName: instanceName
-
-              initFirstStep:
+              installGit:
                 action: execrun
                 precedingPhases: [ getContext ]
                 parameters:
@@ -119,16 +118,49 @@ application:
                   - bash -exc
                   - |
                       yum install -y git
+                output:
+                  result_installGit: stdout
+              installGem:
+                action: execrun
+                precedingPhases: [ installGit ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: true
+                  command: 
+                  - bash -exc
+                  - |
                       yum install -y gem
                       gem install rubygems-update
-                      update_rubygems
+                output:
+                  result_installGem: stdout
+              updateRubyGems:
+                action: execrun
+                precedingPhases: [ installGem ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: true
+                  command: 
+                  - bash -exc
+                  - |
+                      /usr/local/bin/update_rubygems
+                output:
+                  result_updateRubyGems: stdout
+              installRhc:
+                action: execrun
+                precedingPhases: [ updateRubyGems ]
+                parameters:
+                  roles: [ compute ]
+                  isSudo: true
+                  command: 
+                  - bash -exc
+                  - |
                       gem install rhc
                       echo "  StrictHostKeyChecking no" >> /etc/ssh/ssh_config 
                 output:
-                  clientKey: stdout
-              initSecondStep:
+                  result_installRhc: stdout
+              initRhc:
                 action: execrun
-                precedingPhases: [ initFirstStep ]
+                precedingPhases: [ installRhc ]
                 parameters:
                   roles: [ compute ]
                   isSudo: false
@@ -138,10 +170,10 @@ application:
                       echo -e "yes\nkey{$.instanceId}" | /usr/local/bin/rhc setup --server openshift.redhat.com -l {$.props.credentials.login_openshift} -p {$.props.credentials.password_openshift} --create-token
                       mkdir $${{HOME}}/.openshift_service
                 output:
-                  clientKey2: stdout
+                  result_initRhc: stdout
               initGit:
                 action: execrun
-                precedingPhases: [ initSecondStep ]
+                precedingPhases: [ initRhc ]
                 parameters:
                   roles: [ compute ]
                   isSudo: false
@@ -151,7 +183,7 @@ application:
                       git config --global user.name "{$.props.credentials.username_git}"
                       git config --global user.email {$.props.credentials.useremail_git}
                 output:
-                  outPutGitInit: stdout
+                  result_outPutGitInit: stdout
             return: ### Values returned from workflow
               status:
                 value: "status Ok"
