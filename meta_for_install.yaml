@@ -4,7 +4,7 @@ kit:
   applications:
     - name: "PetClinic NSN8"
       manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/starter-java-web-QOS.yml 
-    - name: "Database NSN5"
+    - name: "Database NSN8"
       manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/component-mysql-dev.yml 
     - name: "Load Balancer NSN8"
       manifest: https://raw.githubusercontent.com/anton-haldin/collections/dev/component-haproxy.yml 
