@@ -12,7 +12,7 @@ Abstract:
 
 Structure:
 - README (face page with two pictures that looks good in raw format)
-- README-part2 (more words)
+- README-part2 (more words): task definitions, dependecies, todo, failures.
 - INSTALL (how to)
 - change-test-list.txt
 

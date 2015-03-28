@@ -102,8 +102,7 @@ this manifest. there is fresh version (backlog)
 Questions:
 - lifecycle application entity in OpenShift 
 
-
-Failed which were happened in process of testing:
+Failures which happened  in process of testing:
 - 'yum update => python -c "import yum" => failed '. was caused by changes in amazon package repository. was fixed.
   - https://forums.aws.amazon.com/thread.jspa?messageID=610503
 - mvn repo was not available :
