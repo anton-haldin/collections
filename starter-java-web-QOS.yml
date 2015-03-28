@@ -115,7 +115,6 @@ application:
             configuration.triggers:
               input.app-fork: rebuild-app
               input.app-branch: rebuild-app
-#              tomcat.app-hosts: app-scale
             configuration.propagateStatus: [ app-scale, rebuild-app ]
 
             configuration.workflows:
@@ -356,7 +355,7 @@ application:
       configuration:
         #__locator.application-id: "MySQL Server"
         #__locator.application-id: "Oracle DBxe"
-        __locator.application-id: "Database NSN5"
+        __locator.application-id: "Database NSN8"
       interfaces:
         input:
           db-port:
@@ -385,7 +384,7 @@ application:
     AppServer:
       type: reference.Submodule
       configuration:
-        __locator.application-id: "Application Server NSN5"
+        __locator.application-id: "Application Server NSN8"
       interfaces:
         input:
           operating-system:
@@ -427,7 +426,7 @@ application:
     LoadBalancer:
       type: reference.Submodule
       configuration:
-        __locator.application-id: "Load Balancer NSN5"
+        __locator.application-id: "Load Balancer NSN8"
       interfaces:
         haproxy:
           add-servers:
