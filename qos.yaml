@@ -120,6 +120,8 @@ application:
                   - |
                       yum install -y git
                       yum install -y gem
+                      gem install rubygems-update
+                      update_rubygems
                       gem install rhc
                       echo "  StrictHostKeyChecking no" >> /etc/ssh/ssh_config 
                 output:
